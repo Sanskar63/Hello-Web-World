@@ -1,3 +1,4 @@
+//we are going to use try catch syntax a lot and this is why we are making a wrapper here which will handle error if they come.
 const asyncHandler = (requestHandler) => {
     return (req, res, next) => {
         Promise.resolve(requestHandler(req, res, next)).catch((err) => next(err))

@@ -16,4 +16,12 @@ app.use(express.static("public")) //configuration for storing our static files.
 app.use(cookieParser()) //to be able to perform CRUD operations on cookie of the browser of user.
 
 
+//router import
+import userRouter from "./routes/user.routes.js" //import is done this way when export is default and here we can give it any name like here the file was exported by name of router but it is imported as userRouter.
+
+//routes declaration
+//app.get is used when we writer routes and controllers at same place but in production level we keep routes and controllers seperate thus we'll have to use app.use
+app.use("/api/v1/users", userRouter);
+
+
 export { app }
