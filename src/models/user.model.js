@@ -76,6 +76,7 @@ userSchema.methods.generateAccessToken = function(){
             expiresIn: process.env.ACCESS_TOKEN_EXPIRY
         }
     )
+    // jwt.sign() method: It takes a payload (which is an object containing claims about the user or other data), a secret key (used to sign the token), and an options object (which can specify various settings like the token's expiry, algorithm used for signing, etc.). 
 }
 userSchema.methods.generateRefreshToken = function(){
     return jwt.sign(
@@ -88,6 +89,7 @@ userSchema.methods.generateRefreshToken = function(){
             expiresIn: process.env.REFRESH_TOKEN_EXPIRY
         }
     )
+    
 }
 
 export const User = mongoose.model("User", userSchema)
