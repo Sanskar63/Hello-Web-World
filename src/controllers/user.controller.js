@@ -1,11 +1,11 @@
 import { asyncHandler } from "../utils/asyncHandler.js"; //import is done this way when export is like export {asyncHandler}
-import {ApiError} from "../utils/ApiError.js"
-import {ApiResponse} from "../utils/ApiResponse.js"
-import {User} from "../models/user.model.js"
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import { ApiError } from "../utils/ApiError.js"
+import { ApiResponse } from "../utils/ApiResponse.js"
+import { User } from "../models/user.model.js"
+import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import jwt from "jsonwebtoken";
 
-const generateAccessAndRefereshTokens = async(userId) =>{
+const generateAccessAndRefereshTokens = async (userId) => {
     try {
         const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
@@ -14,7 +14,7 @@ const generateAccessAndRefereshTokens = async(userId) =>{
         user.refreshToken = refreshToken //we save refresh token in our db and give access token to the user. 
         await user.save({ validateBeforeSave: false })//on saving all the code will be fired and mongoose will give errror because there a some feilds that are required like password thus  we have set validation to false.
 
-        return {accessToken, refreshToken}
+        return { accessToken, refreshToken }
 
 
     } catch (error) {
@@ -22,7 +22,7 @@ const generateAccessAndRefereshTokens = async(userId) =>{
     }
 }
 
-const registerUser = asyncHandler(async (req, res)=>{
+const registerUser = asyncHandler(async (req, res) => {
 
     // get user details from frontend
     // validation - not empty
@@ -35,7 +35,7 @@ const registerUser = asyncHandler(async (req, res)=>{
     // return res
 
 
-    const {fullName, email, username, password } = req.body
+    const { fullName, email, username, password } = req.body
 
     if (
         [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -56,14 +56,14 @@ const registerUser = asyncHandler(async (req, res)=>{
     }
 
     // console.log(req.files);
-    
+
     let coverImageLocalPath;
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files.coverImage[0].path
     }
-    
+
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    
+
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar file is required")
     }
@@ -74,12 +74,12 @@ const registerUser = asyncHandler(async (req, res)=>{
     if (!avatar) {
         throw new ApiError(400, "Avatar file is required")
     }
-   
+
     const user = await User.create({
         fullName,
         avatar: avatar.url,
         coverImage: coverImage?.url || "",
-        email, 
+        email,
         password,
         username: username.toLowerCase()
     })
@@ -95,22 +95,10 @@ const registerUser = asyncHandler(async (req, res)=>{
     return res.status(201).json(
         new ApiResponse(200, createdUser, "User registered Successfully")
     )
-
-
-
-
-
-
-
-
-
-
-
-
-    }
+}
 )
 
-const loginUser = asyncHandler(async (req, res) =>{
+const loginUser = asyncHandler(async (req, res) => {
     // req body -> data
     // username or email
     //find the user
@@ -118,66 +106,71 @@ const loginUser = asyncHandler(async (req, res) =>{
     //access and referesh token
     //send cookie
 
-    const {email, username, password} = req.body
+    const { email, username, password } = req.body
     console.log(email);
 
     if (!username && !email) {
         throw new ApiError(400, "username or email is required")
     }
-    
+
     // Here is an alternative of above code based on logic discussed in video:
     // if (!(username || email)) {
     //     throw new ApiError(400, "username or email is required")
-        
+
     // }
 
     const user = await User.findOne({
-        $or: [{username}, {email}]
+        $or: [{ username }, { email }]
     })
 
     if (!user) {
         throw new ApiError(404, "User does not exist")
     }
 
-   const isPasswordValid = await user.isPasswordCorrect(password)
+    const isPasswordValid = await user.isPasswordCorrect(password)
 
-   if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid user credentials")
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid user credentials")
     }
 
-   const {accessToken, refreshToken} = await generateAccessAndRefereshTokens(user._id)
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id)
 
-   const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
-   //What was need when we already had user? --> the user we had didn't have accessToken because it is created by the code just above.
-   //We also couldv'e updated existing "user" its totally upto us.
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+    //What was need when we already had user? --> the user we had didn't have accessToken because it is created by the code just above.
+    //We also couldv'e updated existing "user" its totally upto us.
 
 
-   //we need to design option when we want to send cookies. options are objects. 
-   const options = {
+    //we need to design option when we want to send cookies. options are objects. 
+    //In web development, cookies are used to store small pieces of data on the client-side (in the user's browser) to maintain state between HTTP requests. When sending or receiving cookies, it's important to set various options for security, privacy, and functionality reasons. Here are some common options and reasons why they are used:
+
+    //Secure: Setting the Secure option ensures that the cookie is only sent over HTTPS connections. This helps prevent the cookie from being intercepted by malicious users in transit over unencrypted HTTP connections.
+
+    //HttpOnly: Setting the HttpOnly option prevents client-side scripts (such as JavaScript) from accessing the cookie. This helps mitigate certain types of cross-site scripting (XSS) attacks where an attacker injects malicious scripts into a web page to steal cookies.
+    const options = {
         httpOnly: true,
         secure: true
         //by default anyone (frontend and backend) can modify cookies but after adding this it can only be modified by backend sever.
     }
 
     return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-        new ApiResponse(
-            200, 
-            {
-                user: loggedInUser, accessToken, refreshToken
-            },
-            "User logged In Successfully"
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    user: loggedInUser, accessToken, refreshToken
+                },
+                "User logged In Successfully"
+            )
         )
-    )
-    
+
 
 
 })
 
-const logoutUser = asyncHandler(async(req, res)=>{
+const logoutUser = asyncHandler(async (req, res) => {
     //here we don't know to which user log out because we don't have access of user or loggedInUser. So here we make a middleware 
     await User.findByIdAndUpdate(
         req.user._id,
@@ -192,19 +185,24 @@ const logoutUser = asyncHandler(async(req, res)=>{
         }
     )
 
-    
-   //we need to design option when we want to deal with cookies. options are objects. 
-   const options = {
-    httpOnly: true,
-    secure: true
-    //by default anyone (frontend and backend) can modify cookies but after adding this it can only be modified by backend sever.
-}
+
+    //we need to design option when we want to deal with cookies. options are objects. 
+    //In web development, cookies are used to store small pieces of data on the client-side (in the user's browser) to maintain state between HTTP requests. When sending or receiving cookies, it's important to set various options for security, privacy, and functionality reasons. Here are some common options and reasons why they are used:
+
+    //Secure: Setting the Secure option ensures that the cookie is only sent over HTTPS connections. This helps prevent the cookie from being intercepted by malicious users in transit over unencrypted HTTP connections.
+
+    //HttpOnly: Setting the HttpOnly option prevents client-side scripts (such as JavaScript) from accessing the cookie. This helps mitigate certain types of cross-site scripting (XSS) attacks where an attacker injects malicious scripts into a web page to steal cookies.
+    const options = {
+        httpOnly: true,
+        secure: true
+        //by default anyone (frontend and backend) can modify cookies but after adding this it can only be modified by backend sever.
+    }
 
     return res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged Out"))
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "User logged Out"))
 })
 
 
@@ -220,36 +218,36 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             incomingRefreshToken,
             process.env.REFRESH_TOKEN_SECRET
         )
-    
+
         const user = await User.findById(decodedToken?._id)
-    
+
         if (!user) {
             throw new ApiError(401, "Invalid refresh token")
         }
-    
+
         if (incomingRefreshToken !== user?.refreshToken) {
             throw new ApiError(401, "Refresh token is expired or used")
-            
+
         }
-    
+
         const options = {
             httpOnly: true,
             secure: true
         }
-    
-        const {accessToken, newRefreshToken} = await generateAccessAndRefereshTokens(user._id)
-    
+
+        const { accessToken, newRefreshToken } = await generateAccessAndRefereshTokens(user._id)
+
         return res
-        .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", newRefreshToken, options)
-        .json(
-            new ApiResponse(
-                200, 
-                {accessToken, refreshToken: newRefreshToken},
-                "Access token refreshed"
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .json(
+                new ApiResponse(
+                    200,
+                    { accessToken, refreshToken: newRefreshToken },
+                    "Access token refreshed"
+                )
             )
-        )
     } catch (error) {
         throw new ApiError(401, error?.message || "Invalid refresh token")
     }
@@ -257,10 +255,127 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 })
 
 
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body
 
 
 
+    const user = await User.findById(req.user?._id)
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
 
+    if (!isPasswordCorrect) {
+        throw new ApiError(400, "Invalid old password")
+    }
+
+    user.password = newPassword
+    await user.save({ validateBeforeSave: false })
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Password changed successfully"))
+})
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(new ApiResponse(
+            200,
+            req.user,
+            "User fetched successfully"
+        ))
+})
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { fullName, email } = req.body
+
+    if (!fullName || !email) {
+        throw new ApiError(400, "All fields are required")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                fullName, // equals to fullName: fullName,(shorthand property)
+                email: email
+            }
+        },
+        { new: true }
+        //using this will return the updated value;
+
+    ).select("-password")
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Account details updated successfully"))
+});
+
+const updateUserAvatar = asyncHandler(async(req, res) => {
+    const avatarLocalPath = req.file?.path
+
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar file is missing")
+    }
+
+    //TODO: delete old image - assignment
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+    if (!avatar.url) {
+        throw new ApiError(400, "Error while uploading on avatar")
+        
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set:{
+                avatar: avatar.url
+            }
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, user, "Avatar image updated successfully")
+    )
+})
+
+const updateUserCoverImage = asyncHandler(async(req, res) => {
+    const coverImageLocalPath = req.file?.path
+
+    if (!coverImageLocalPath) {
+        throw new ApiError(400, "Cover image file is missing")
+    }
+
+    //TODO: delete old image - assignment
+
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    if (!coverImage.url) {
+        throw new ApiError(400, "Error while uploading on avatar")
+        
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set:{
+                coverImage: coverImage.url
+            }
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, user, "Cover image updated successfully")
+    )
+})
 
 
 
@@ -269,5 +384,10 @@ export {
     registerUser,
     loginUser,
     logoutUser,
-    refreshAccessToken
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCoverImage
 }
