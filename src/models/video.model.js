@@ -41,5 +41,8 @@ const videoSchema = new Schema(
     }
 )
 videoSchema.plugin(mongooseAggregatePaginate)
+//In web development, especially in applications dealing with large datasets, displaying all results on a single page is impractical and can lead to performance issues. Pagination is a technique used to divide large sets of data into smaller, more manageable chunks or pages. Users can then navigate through these pages to view data without overwhelming the system or experiencing significant load times.
+
+//However, Mongoose's default aggregation framework does not support pagination out of the box. The mongoose-aggregate-paginate-v2 plugin adds this functionality, allowing developers to easily implement server-side pagination on data retrieved through complex aggregation pipelines.
 
 export const Video = mongoose.model("Video", videoSchema)

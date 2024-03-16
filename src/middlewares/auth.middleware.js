@@ -14,6 +14,7 @@ export const verifyJWT = asyncHandler(async(req, _, next) => {
         }
     
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+        //When a JWT is created using jwt.sign(), it is signed with a secret key or a public/private key pair. jwt.verify() checks the token's signature using the same key to ensure that the token is valid. If the token is valid, it returns the payload decoded. If the token is not valid (e.g., if it has been tampered with, or the signature does not match), it will throw an error.
     
         const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
     
