@@ -6,5 +6,6 @@ class ApiResponse {
         this.success = statusCode < 400
     }
 }
+//The constructor is a special method for creating and initializing objects created within a class.
 
 export { ApiResponse }

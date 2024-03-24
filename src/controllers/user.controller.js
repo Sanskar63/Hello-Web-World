@@ -35,10 +35,12 @@ const registerUser = asyncHandler(async (req, res) => {
     // return res
 
 
-    const { fullName, email, username, password } = req.body
+    const { fullName, email, username, password } = req.body;
 
     if (
         [fullName, email, username, password].some((field) => field?.trim() === "")
+        //.trim is only and only for string
+        
         //The trim() method removes whitespace from both ends of a string. The ?. is the optional chaining operator, which allows accessing properties and methods of an object that may be null or undefined without causing an error. If field is null or undefined, the expression evaluates to undefined.
     ) {
         throw new ApiError(400, "All fields are required")
@@ -107,7 +109,7 @@ const loginUser = asyncHandler(async (req, res) => {
     //send cookie
 
     const { email, username, password } = req.body
-    console.log(email);
+    // console.log(email);
 
     if (!username && !email) {
         throw new ApiError(400, "username or email is required")
@@ -134,6 +136,8 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id)
+
+    // console.log(accessToken, refreshToken);
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
     //What was need when we already had user? --> the user we had didn't have accessToken because it is created by the code just above.
@@ -454,6 +458,8 @@ const getWatchHistory = asyncHandler(async(req, res) => {
         {
             $match: {
                 _id: new mongoose.Types.ObjectId(req.user._id)
+                //why didn't we use req.user._id directly to search for id cuz that is what we have been doing till now 
+                //Actully when in mongodb id is in form of Object('93u54u403459') and whenever we directly give req.user._id it does not return id but it returns string and mongoose handles it and converts it to id itself. But in here aggregatio mongoose doesn't work so we do this to awaken mongoose to do the work again.
             }
         },
         {

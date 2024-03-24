@@ -18,10 +18,17 @@ app.use(cookieParser()) //to be able to perform CRUD operations on cookie of the
 
 //router import
 import userRouter from "./routes/user.routes.js" //import is done this way when export is default and here we can give it any name like here the file was exported by name of router but it is imported as userRouter.
+import videoRouter from "./routes/video.routes.js"
+import commentRouter from "./routes/comment.routes.js"
+import likeRouter from "./routes/like.routes.js"
+// import playlistRouter from "./routes/playlist.routes.js"
+
 
 //routes declaration
 //app.get is used when we writer routes and controllers at same place but in production level we keep routes and controllers seperate thus we'll have to use app.use
 app.use("/api/v1/users", userRouter);
-
-
+app.use("/api/v1/videos", videoRouter); 
+app.use("/api/v1/comments", commentRouter)
+app.use("/api/v1/likes", likeRouter)
+// app.use("/api/v1/playlist", playlistRouter)
 export { app }
